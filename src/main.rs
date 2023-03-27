@@ -44,7 +44,10 @@ fn parse_ordered_list(input: &str) -> String {
     let line_vec: Vec<&str> = input.split("\n").collect();
     let mut output = "<ol>".to_string();
     for line in line_vec {
-        let text = line.replace(&['.'], "");
+        let mut chars = line.chars();
+        chars.next();
+        chars.next();
+        let text = chars.as_str();
         if !text.is_empty() {
             output.push_str(&build_list_item(&text.trim()));
         }
@@ -134,5 +137,5 @@ fn test_build_html() {
 
 #[test]
 fn test_ordered_list() {
-    assert_eq!(parse_unordered_list("1. bullet point 1\n2. bullet point 2\n3. bullet point 3\n"), "<ol><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ol>");
+    assert_eq!(parse_ordered_list("1. bullet point 1\n2. bullet point 2\n3. bullet point 3\n"), "<ol><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ol>");
 }
