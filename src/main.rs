@@ -1,9 +1,65 @@
+use std::fs;
+
 fn main() {
-    
+    process_document("test.md");
 }
 
-fn process_document() {
+fn process_document(path: &str) -> String {
+    let contents = fs::read_to_string(path)
+        .expect("Should have been able to read the file");
+    process_string(contents.as_str())
+}
 
+fn process_string(md: &str) -> String {
+    let lines: Vec<_> = md.split("\n")
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|l| l.replace("\r", ""))
+        .filter(|l| *l != "")
+        .collect();
+
+    let mut html = "".to_string();
+    let mut is_multiline = false;
+    let mut multiline_item = "";
+    let mut last_char: char;
+    let mut current_char: char;
+
+    for line in lines {
+        current_char = line.chars().next()
+        match current_char {
+            Some('#') => {
+                let header = parse_header(line.as_str());
+                html.push_str(header.as_str());
+                html.push_str("\n");
+            }
+            Some('*') => {
+                if line == "***" {
+                    html.push_str(horizontal_rule().as_str());
+                    html.push_str("\n");
+                } else {
+                    if is_multiline && last_char == current_char {
+                        
+                    } else if is_multiline {
+                        is_multiline = false;
+                    } else {
+                        
+                    }
+                }
+            }
+            _ => {
+                if line == "" {
+                    break;
+                } else {
+                    let p = paragraph(line.as_str());
+                    html.push_str(p.as_str());
+                    html.push_str("\n");
+                }
+            }
+            last_char = line.chars().next();
+        };
+    }
+    print!("{:?}", html);
+    html.to_string()
 }
 
 fn paragraph(input: &str) -> String {
@@ -95,6 +151,17 @@ fn link(title: &str, href: &str) -> String {
 
 fn horizontal_rule() -> String {
     single_tag("hr")
+}
+
+#[test]
+fn test_processing() {
+    let md = fs::read_to_string("../test.md")
+        .expect("Should have been able to read the file");
+
+    let html = fs::read_to_string("../test.html")
+        .expect("Should have been able to read the file");
+
+    assert_eq!(process_string(md.as_str()), html.as_str());
 }
 
 #[test]
