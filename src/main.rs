@@ -41,7 +41,7 @@ fn parse_unordered_list(input: &str) -> String {
 }
 
 fn parse_ordered_list(input: &str) -> String {
-
+    "".to_string()
 }
 
 fn build_list_item(input: &str) -> String {
@@ -55,7 +55,7 @@ fn build_html(tag: &str, text: &str) -> String {
     format!("<{}>{}</{}>", tag, text, tag)
 }
 
-fn build_html_with_attrs(tag: &str, text: &str, attrs: HashMap<&str, &str>) -> String {
+fn build_html_with_attrs(tag: &str, text: &str, attrs: Vec<(&str, &str)>) -> String {
     let mut format = format!("<{}", tag);
 
     for (key, value) in attrs {
@@ -73,7 +73,7 @@ fn single_tag(tag: &str) -> String {
 }
 
 fn link(title: &str, href: &str) -> String {
-    let attrs = HashMap::from([("href", href)]);
+    let attrs = vec![("href", href)];
     build_html_with_attrs("a", title, attrs)
 }
 
@@ -114,10 +114,10 @@ fn test_link() {
 #[test]
 fn test_build_html() {
     assert_eq!(build_html("tag", "text"), "<tag>text</tag>");
-    let attrs = HashMap::from([
+    let attrs = vec![
         ("class1", "name1"),
         ("class2", "name2")
-    ]);
+    ];
     assert_eq!(build_html_with_attrs("tag", "text", attrs), "<tag class1=\"name1\" class2=\"name2\">text</tag>");
 }
 
