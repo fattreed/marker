@@ -90,6 +90,10 @@ fn link(title: &str, href: &str) -> String {
     build_html_with_attrs("a", title, attrs)
 }
 
+fn horizontal_rule() -> String {
+    single_tag("hr")
+}
+
 #[test]
 fn test_header() {
     assert_eq!(parse_header("# Header 1"), "<h1>Header 1</h1>");
@@ -138,4 +142,9 @@ fn test_build_html() {
 #[test]
 fn test_ordered_list() {
     assert_eq!(parse_ordered_list("1. bullet point 1\n2. bullet point 2\n3. bullet point 3\n"), "<ol><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ol>");
+}
+
+#[test]
+fn test_horizontal_rule() {
+    assert_eq!(horizontal_rule(), "<hr>");
 }
