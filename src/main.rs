@@ -26,7 +26,7 @@ fn parse_header(input: &str) -> String {
     }
 }
 
-fn parse_bullet(input: &str) -> String {
+fn parse_unordered_list(input: &str) -> String {
     let line_vec: Vec<&str> = input.split("\n").collect();
 
     let mut output = "<ul>".to_string();
@@ -38,6 +38,10 @@ fn parse_bullet(input: &str) -> String {
     }
     output.push_str("</ul>");
     output
+}
+
+fn parse_ordered_list(input: &str) -> String {
+
 }
 
 fn build_list_item(input: &str) -> String {
@@ -86,10 +90,10 @@ fn test_header() {
 }
 
 #[test]
-fn test_bullet() {
-    assert_eq!(parse_bullet("* bullet point 1\n* bullet point 2\n* bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
-    assert_eq!(parse_bullet("- bullet point 1\n- bullet point 2\n- bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
-    assert_eq!(parse_bullet("+ bullet point 1\n+ bullet point 2\n+ bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
+fn test_unordered_list() {
+    assert_eq!(parse_unordered_list("* bullet point 1\n* bullet point 2\n* bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
+    assert_eq!(parse_unordered_list("- bullet point 1\n- bullet point 2\n- bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
+    assert_eq!(parse_unordered_list("+ bullet point 1\n+ bullet point 2\n+ bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
 }
 
 #[test]
@@ -115,4 +119,9 @@ fn test_build_html() {
         ("class2", "name2")
     ]);
     assert_eq!(build_html_with_attrs("tag", "text", attrs), "<tag class1=\"name1\" class2=\"name2\">text</tag>");
+}
+
+#[test]
+fn test_ordered_list() {
+
 }
