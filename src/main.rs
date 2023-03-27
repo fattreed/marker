@@ -29,7 +29,9 @@ fn parse_unordered_list(input: &str) -> String {
 
     let mut output = "<ul>".to_string();
     for line in line_vec {
-        let text = line.replace(&['*', '-', '+'], "");
+        let mut chars = line.chars();
+        chars.next();
+        let text = chars.as_str();
         if !text.is_empty() {
             output.push_str(&build_list_item(&text.trim()));
         }
@@ -39,7 +41,17 @@ fn parse_unordered_list(input: &str) -> String {
 }
 
 fn parse_ordered_list(input: &str) -> String {
-    "".to_string()
+    let line_vec: Vec<&str> = input.split("\n").collect();
+    let mut output = "<ol>".to_string();
+    for line in line_vec {
+        let text = line.replace(&['.'], "");
+        if !text.is_empty() {
+            output.push_str(&build_list_item(&text.trim()));
+        }
+    }
+    output.push_str("</ol>");
+    output
+
 }
 
 fn build_list_item(input: &str) -> String {
@@ -92,6 +104,7 @@ fn test_unordered_list() {
     assert_eq!(parse_unordered_list("* bullet point 1\n* bullet point 2\n* bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
     assert_eq!(parse_unordered_list("- bullet point 1\n- bullet point 2\n- bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
     assert_eq!(parse_unordered_list("+ bullet point 1\n+ bullet point 2\n+ bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
+    assert_eq!(parse_unordered_list("+ bullet **point** 1\n+ bullet +point 2\n+ bullet -point 3\n"), "<ul><li>bullet **point** 1</li><li>bullet +point 2</li><li>bullet -point 3</li></ul>");
 }
 
 #[test]
@@ -121,5 +134,5 @@ fn test_build_html() {
 
 #[test]
 fn test_ordered_list() {
-
+    assert_eq!(parse_unordered_list("1. bullet point 1\n2. bullet point 2\n3. bullet point 3\n"), "<ol><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ol>");
 }
