@@ -1,9 +1,19 @@
+use std::collections::HashMap;
+
 fn main() {
     
 }
 
-fn process_docment() {
+fn process_document() {
 
+}
+
+fn paragraph(input: &str) -> String {
+    build_html("p", input)
+}
+
+fn line_break() -> String {
+    single_tag("br")
 }
 
 fn parse_header(input: &str) -> String {
@@ -41,6 +51,28 @@ fn build_html(tag: &str, text: &str) -> String {
     format!("<{}>{}</{}>", tag, text, tag)
 }
 
+fn build_html_with_attrs(tag: &str, text: &str, attrs: HashMap<&str, &str>) -> String {
+    let mut format = format!("<{}", tag);
+
+    for (key, value) in attrs {
+        let attr_str = format!(" {}=\"{}\"", key, value);
+        format.push_str(attr_str.as_str());
+    } 
+
+    let end = format!(">{}</{}>", text, tag);
+    format.push_str(end.as_str());
+    format
+}
+
+fn single_tag(tag: &str) -> String {
+    format!("<{}>", tag)
+}
+
+fn link(title: &str, href: &str) -> String {
+    let attrs = HashMap::from([("href", href)]);
+    build_html_with_attrs("a", title, attrs)
+}
+
 #[test]
 fn test_header() {
     assert_eq!(parse_header("# Header 1"), "<h1>Header 1</h1>");
@@ -58,4 +90,29 @@ fn test_bullet() {
     assert_eq!(parse_bullet("* bullet point 1\n* bullet point 2\n* bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
     assert_eq!(parse_bullet("- bullet point 1\n- bullet point 2\n- bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
     assert_eq!(parse_bullet("+ bullet point 1\n+ bullet point 2\n+ bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
+}
+
+#[test]
+fn test_line_break() {
+    assert_eq!(line_break(), "<br>");
+}
+
+#[test]
+fn test_paragraph() {
+    assert_eq!(paragraph("this is a test paragraph"), "<p>this is a test paragraph</p>");
+}
+
+#[test]
+fn test_link() {
+    assert_eq!(link("title", "http://google.com"), "<a href=\"http://google.com\">title</a>");
+}
+
+#[test]
+fn test_build_html() {
+    assert_eq!(build_html("tag", "text"), "<tag>text</tag>");
+    let attrs = HashMap::from([
+        ("class1", "name1"),
+        ("class2", "name2")
+    ]);
+    assert_eq!(build_html_with_attrs("tag", "text", attrs), "<tag class1=\"name1\" class2=\"name2\">text</tag>");
 }
