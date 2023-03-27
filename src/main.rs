@@ -15,10 +15,14 @@ fn line_break() -> String {
 }
 
 fn parse_header(input: &str) -> String {
-    let hashtags_count = input.trim().match_indices("#").count();
-    if hashtags_count < 7 {
-        let text = &input.trim()[hashtags_count..];
-        build_html(format!("h{}", hashtags_count).as_str(), text.trim())
+    let mut chars = input.trim().chars();
+    let mut hashtag_count = 0;
+    while chars.next() == Some('#') {
+        hashtag_count += 1;
+    }
+    if hashtag_count < 7 && input.replace("#", "").chars().next() == Some(' '){
+        let text = chars.as_str().replace("#", "");
+        build_html(format!("h{}", hashtag_count).as_str(), text.trim())
     } else {
         build_html("p", input)
     }
@@ -54,7 +58,6 @@ fn parse_ordered_list(input: &str) -> String {
     }
     output.push_str("</ol>");
     output
-
 }
 
 fn build_list_item(input: &str) -> String {
@@ -104,6 +107,8 @@ fn test_header() {
     assert_eq!(parse_header("###### Header 6"), "<h6>Header 6</h6>");
     assert_eq!(parse_header("####### Not a Header"), "<p>####### Not a Header</p>");
     assert_eq!(parse_header("    # Header 1"), "<h1>Header 1</h1>");
+    assert_eq!(parse_header("#Header 1"), "<p>#Header 1</p>");
+    assert_eq!(parse_header("# Header 1 #"), "<h1>Header 1</h1>");
 }
 
 #[test]
