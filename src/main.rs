@@ -28,7 +28,7 @@ fn parse_unordered_list(input: &str) -> String {
     let line_vec: Vec<&str> = input.split("\n").collect();
 
     let mut output = "<ul>".to_string();
-    for line in line_vec.iter() {
+    for line in line_vec {
         let text = line.replace(&['*', '-', '+'], "");
         if !text.is_empty() {
             output.push_str(&build_list_item(&text.trim()));
