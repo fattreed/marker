@@ -19,31 +19,27 @@ fn process_string(md: &str) -> String {
         .collect();
 
     let mut html = "".to_string();
-    let mut is_multiline = false;
-    let mut multiline_item = "";
-    let mut last_char: char;
-    let mut current_char: char;
+    let mut begin_list = false;
+    let mut last_char: Option<char> = None;
 
     for line in lines {
-        current_char = line.chars().next()
+        let current_char = line.chars().next();
+        if last_char == Some('*') && current_char != Some('*') {
+            html.push_str("</ul>")
+        }
         match current_char {
             Some('#') => {
-                let header = parse_header(line.as_str());
+                let header = header(line.as_str());
                 html.push_str(header.as_str());
-                html.push_str("\n");
             }
             Some('*') => {
                 if line == "***" {
                     html.push_str(horizontal_rule().as_str());
-                    html.push_str("\n");
                 } else {
-                    if is_multiline && last_char == current_char {
-                        
-                    } else if is_multiline {
-                        is_multiline = false;
-                    } else {
-                        
+                    if last_char != Some('*') {
+                        html.push_str("<ul>");
                     }
+                    html.push_str(unordered_list_item(line.as_str()).as_str());
                 }
             }
             _ => {
@@ -52,14 +48,13 @@ fn process_string(md: &str) -> String {
                 } else {
                     let p = paragraph(line.as_str());
                     html.push_str(p.as_str());
-                    html.push_str("\n");
                 }
             }
-            last_char = line.chars().next();
         };
+        last_char = current_char;
     }
     print!("{:?}", html);
-    html.to_string()
+    html.to_string().escape_default().to_string()
 }
 
 fn paragraph(input: &str) -> String {
@@ -70,7 +65,7 @@ fn line_break() -> String {
     single_tag("br")
 }
 
-fn parse_header(input: &str) -> String {
+fn header(input: &str) -> String {
     let mut chars = input.trim().chars();
     let mut hashtag_count = 0;
     while chars.next() == Some('#') {
@@ -84,36 +79,19 @@ fn parse_header(input: &str) -> String {
     }
 }
 
-fn parse_unordered_list(input: &str) -> String {
-    let line_vec: Vec<&str> = input.split("\n").collect();
-
-    let mut output = "<ul>".to_string();
-    for line in line_vec {
-        let mut chars = line.chars();
-        chars.next();
-        let text = chars.as_str();
-        if !text.is_empty() {
-            output.push_str(&build_list_item(&text.trim()));
-        }
-    }
-    output.push_str("</ul>");
-    output
+fn unordered_list_item(line: &str) -> String {
+    let mut chars = line.chars();
+    chars.next();
+    let text = chars.as_str();
+    build_list_item(text.trim())
 }
 
-fn parse_ordered_list(input: &str) -> String {
-    let line_vec: Vec<&str> = input.split("\n").collect();
-    let mut output = "<ol>".to_string();
-    for line in line_vec {
-        let mut chars = line.chars();
-        chars.next();
-        chars.next();
-        let text = chars.as_str();
-        if !text.is_empty() {
-            output.push_str(&build_list_item(&text.trim()));
-        }
-    }
-    output.push_str("</ol>");
-    output
+fn ordered_list_item(line: &str) -> String {
+    let mut chars = line.chars();
+    chars.next();
+    chars.next();
+    let text = chars.as_str();
+    build_list_item(text.trim())
 }
 
 fn build_list_item(input: &str) -> String {
@@ -155,10 +133,10 @@ fn horizontal_rule() -> String {
 
 #[test]
 fn test_processing() {
-    let md = fs::read_to_string("../test.md")
+    let md = fs::read_to_string("test.md")
         .expect("Should have been able to read the file");
 
-    let html = fs::read_to_string("../test.html")
+    let html = fs::read_to_string("test.html")
         .expect("Should have been able to read the file");
 
     assert_eq!(process_string(md.as_str()), html.as_str());
@@ -166,24 +144,26 @@ fn test_processing() {
 
 #[test]
 fn test_header() {
-    assert_eq!(parse_header("# Header 1"), "<h1>Header 1</h1>");
-    assert_eq!(parse_header("## Header 2"), "<h2>Header 2</h2>");
-    assert_eq!(parse_header("### Header 3"), "<h3>Header 3</h3>");
-    assert_eq!(parse_header("#### Header 4"), "<h4>Header 4</h4>");
-    assert_eq!(parse_header("##### Header 5"), "<h5>Header 5</h5>");
-    assert_eq!(parse_header("###### Header 6"), "<h6>Header 6</h6>");
-    assert_eq!(parse_header("####### Not a Header"), "<p>####### Not a Header</p>");
-    assert_eq!(parse_header("    # Header 1"), "<h1>Header 1</h1>");
-    assert_eq!(parse_header("#Header 1"), "<p>#Header 1</p>");
-    assert_eq!(parse_header("# Header 1 #"), "<h1>Header 1</h1>");
+    assert_eq!(header("# Header 1"), "<h1>Header 1</h1>");
+    assert_eq!(header("## Header 2"), "<h2>Header 2</h2>");
+    assert_eq!(header("### Header 3"), "<h3>Header 3</h3>");
+    assert_eq!(header("#### Header 4"), "<h4>Header 4</h4>");
+    assert_eq!(header("##### Header 5"), "<h5>Header 5</h5>");
+    assert_eq!(header("###### Header 6"), "<h6>Header 6</h6>");
+    assert_eq!(header("####### Not a Header"), "<p>####### Not a Header</p>");
+    assert_eq!(header("    # Header 1"), "<h1>Header 1</h1>");
+    assert_eq!(header("#Header 1"), "<p>#Header 1</p>");
+    assert_eq!(header("# Header 1 #"), "<h1>Header 1</h1>");
 }
 
 #[test]
 fn test_unordered_list() {
-    assert_eq!(parse_unordered_list("* bullet point 1\n* bullet point 2\n* bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
-    assert_eq!(parse_unordered_list("- bullet point 1\n- bullet point 2\n- bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
-    assert_eq!(parse_unordered_list("+ bullet point 1\n+ bullet point 2\n+ bullet point 3\n"), "<ul><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ul>");
-    assert_eq!(parse_unordered_list("+ bullet **point** 1\n+ bullet +point 2\n+ bullet -point 3\n"), "<ul><li>bullet **point** 1</li><li>bullet +point 2</li><li>bullet -point 3</li></ul>");
+    assert_eq!(unordered_list_item("* bullet point"), "<li>bullet point</li>");
+    assert_eq!(unordered_list_item("- bullet point"), "<li>bullet point</li>");
+    assert_eq!(unordered_list_item("+ bullet point"), "<li>bullet point</li>");
+    assert_eq!(unordered_list_item("+ bullet **point**"), "<li>bullet **point**</li>");
+    assert_eq!(unordered_list_item("+ bullet +point"), "<li>bullet +point</li>");
+    assert_eq!(unordered_list_item("+ bullet -point"), "<li>bullet -point</li>");
 }
 
 #[test]
@@ -213,7 +193,7 @@ fn test_build_html() {
 
 #[test]
 fn test_ordered_list() {
-    assert_eq!(parse_ordered_list("1. bullet point 1\n2. bullet point 2\n3. bullet point 3\n"), "<ol><li>bullet point 1</li><li>bullet point 2</li><li>bullet point 3</li></ol>");
+    assert_eq!(ordered_list_item("1. bullet point 1"), "<li>bullet point 1</li>");
 }
 
 #[test]
