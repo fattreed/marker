@@ -21,10 +21,15 @@ fn process_string(md: &str) -> String {
     let mut html = "".to_string();
     let mut begin_list = false;
     let mut last_char: Option<char> = None;
+    let mut last_line = "".to_string();
 
     for line in lines {
         let current_char = line.chars().next();
-        if last_char == Some('*') && current_char != Some('*') {
+        if last_char == Some('*') && current_char != Some('*') && last_line != "***" {
+            html.push_str("</ul>")
+        } else if last_char == Some('+') && current_char != Some('+') {
+            html.push_str("</ul>")
+        } else if last_char == Some('-') && current_char != Some('-') && last_line != "---" {
             html.push_str("</ul>")
         }
         match current_char {
@@ -42,6 +47,36 @@ fn process_string(md: &str) -> String {
                     html.push_str(unordered_list_item(line.as_str()).as_str());
                 }
             }
+            Some('+') => {
+                if last_char != Some('+') {
+                    html.push_str("<ul>");
+                }
+                html.push_str(unordered_list_item(line.as_str()).as_str());
+            }
+            Some('-') => {
+                if line == "---" {
+                    html.push_str(horizontal_rule().as_str());
+                } else {
+                    if last_char != Some('-') {
+                        html.push_str("<ul>");
+                    }
+                    html.push_str(unordered_list_item(line.as_str()).as_str());
+                }
+            }
+            Some('_') => {
+                if line == "___" {
+                    html.push_str(horizontal_rule().as_str());
+                }
+            }
+            Some('[') => {
+                let title = line
+                            .split("[")
+                            .collect::<Vec<_>>()[0];
+                let href = line
+                            .split("(")
+                            .collect::<Vec<_>>()[1];
+                html.push_str(link(title, href).as_str())
+            }
             _ => {
                 if line == "" {
                     break;
@@ -52,6 +87,7 @@ fn process_string(md: &str) -> String {
             }
         };
         last_char = current_char;
+        last_line = line;
     }
     print!("{:?}", html);
     html.to_string().escape_default().to_string()
@@ -131,6 +167,33 @@ fn horizontal_rule() -> String {
     single_tag("hr")
 }
 
+fn replace_links(input: &str) -> String {
+    let titles: Vec<_> = input
+                        .split("[")
+                        .collect::<Vec<_>>()
+                        .into_iter()
+                        .map(|t| t.split("]").collect::<Vec<_>>()[0])
+                        .collect::<Vec<_>>()[1..]
+                        .to_vec();
+    
+    let hrefs: Vec<_> = input
+                        .split("(")
+                        .collect::<Vec<_>>()
+                        .into_iter()
+                        .map(|t| t.split(")").collect::<Vec<_>>()[0])
+                        .collect::<Vec<_>>()[1..]
+                        .to_vec();
+
+
+    for title in titles {
+        println!("{}", title);
+    }
+    for href in hrefs {
+        println!("{}", href);
+    }
+    "".to_string()
+}
+
 #[test]
 fn test_processing() {
     let md = fs::read_to_string("test.md")
@@ -199,4 +262,14 @@ fn test_ordered_list() {
 #[test]
 fn test_horizontal_rule() {
     assert_eq!(horizontal_rule(), "<hr>");
+}
+
+#[test]
+fn test_replace_links() {
+    let text = "this is a [link](http://google.com) to google and this is a [link](http://twitter.com) to elon's mom.";
+    assert_eq!(replace_links(text), 
+               "this is a <a href=\"http://google.com\">link</a> to google and this is <a href=\"http://twitter.com\">link</a> to elon's mom.");
+
+    let no_links = "this has no links";
+    assert_eq!(replace_links(no_links), no_links);
 }
