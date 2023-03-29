@@ -1,4 +1,5 @@
 use std::fs;
+use std::collections::HashMap;
 
 fn main() {
     process_document("test.md");
@@ -13,7 +14,7 @@ fn process_document(path: &str) -> String {
 fn process_string(md: &str) -> String {
     let lines: Vec<_> = md.split("\n")
         .collect::<Vec<_>>()
-        .into_iter()
+        .iter()
         .map(|l| l.replace("\r", ""))
         .filter(|l| *l != "")
         .collect();
@@ -67,15 +68,6 @@ fn process_string(md: &str) -> String {
                 if line == "___" {
                     html.push_str(horizontal_rule().as_str());
                 }
-            }
-            Some('[') => {
-                let title = line
-                            .split("[")
-                            .collect::<Vec<_>>()[0];
-                let href = line
-                            .split("(")
-                            .collect::<Vec<_>>()[1];
-                html.push_str(link(title, href).as_str())
             }
             _ => {
                 if line == "" {
@@ -168,30 +160,56 @@ fn horizontal_rule() -> String {
 }
 
 fn replace_links(input: &str) -> String {
-    let titles: Vec<_> = input
-                        .split("[")
-                        .collect::<Vec<_>>()
-                        .into_iter()
-                        .map(|t| t.split("]").collect::<Vec<_>>()[0])
-                        .collect::<Vec<_>>()[1..]
-                        .to_vec();
+    let elements: Vec<_> = input
+        .split("[")
+        .collect::<Vec<_>>();
     
-    let hrefs: Vec<_> = input
-                        .split("(")
-                        .collect::<Vec<_>>()
-                        .into_iter()
-                        .map(|t| t.split(")").collect::<Vec<_>>()[0])
-                        .collect::<Vec<_>>()[1..]
-                        .to_vec();
+    let mut links: HashMap<&str, &str> = HashMap::new();
 
+    if elements.iter().count() < 1 {
+        return input.to_string();
+    }
 
-    for title in titles {
-        println!("{}", title);
+    for element in elements[1..].iter() {
+        let title_vec = element
+            .split("]")
+            .collect::<Vec<_>>();
+         
+        if title_vec.iter().count() < 1 {
+            break;
+        }
+
+        let title = title_vec[0];
+
+        let href_vec = title
+            .split("(")
+            .collect::<Vec<_>>();
+
+        let hrefs = href_vec
+            .into_iter()
+            .map(|l| {
+                let l_vec = l.split(")").collect::<Vec<_>>();
+                if l_vec.iter().count() > 1 {
+                    Some(l_vec[0])
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        for href in hrefs {
+            if let Some(href_str) = href {
+                links.insert(title, href_str);
+            }
+        }
     }
-    for href in hrefs {
-        println!("{}", href);
+
+    let mut output = input.to_string();
+    for (key, value) in links {
+        output = output.replace(format!("[{}]({})", key, value).as_str(), 
+                                format!("<a href=\"{}\">{}</a>", value, key).as_str());
     }
-    "".to_string()
+    output
 }
 
 #[test]
